@@ -1,0 +1,222 @@
+---
+title: "Super Smash Bros. Tournament Locations"
+author: "Jason Chhay"
+date: "3/1/2020"
+output: 
+  prettydoc::html_pretty:
+    theme: hpstr
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo = FALSE}
+library(ggplot2)
+library(gridExtra)
+suppressMessages(library(maps))
+suppressMessages(library(tidyverse))
+suppressMessages(library(sf))
+suppressMessages(library(rnaturalearth))
+suppressMessages(library(rnaturalearthdata))
+```
+
+*The following data is from https://statsmash.io/data/. 
+This website holds a large amount of information about tournaments for Super Smash Bros. Melee and 
+Super Smash Bros. Ultimate. It's actually an interesting website, as it has things like ELO rankings for
+players and matchup histories between players.*
+
+### Hold up, what's "Melee" and "Ultimate"?
+For those unaware, Super Smash Bros. is a fighting game series made by Nintendo. It has a diehard fanbase,
+and those who claim "I'm pretty good at Smash" can duke it out in tournaments. Usually, twitch.tv has streams
+of these tournaments. 
+Two games out of the five within the series are still played in tournaments: 
+Super Smash Bros. Melee (2001) and Super Smash Bros. Ultimate (2018).
+Despite Melee having been released in 2001, it is still played a lot. 
+
+Anyways, I was curious where the majority of these tournaments were held. I have an idea that 
+most tournaments are held in America, but just to make sure, I made a map of where these tournaments
+really are taking place. I look at both Melee and Ultimate data, which come from the following datasets
+found on the website (melee_tournament.csv and ultimate_tournament.csv).
+
+This is a world map of the tournaments that have taken place for Melee from 2018 until the present.
+
+```{r, echo = FALSE}
+melee <- read.csv("melee_tournament.csv")
+coordinatesMelee <- melee[,7:8]
+coordinatesMelee <- coordinatesMelee[which(!is.na(coordinatesMelee[,1])),]
+coordinatesMelee <- st_as_sf(coordinatesMelee, coords = c("lng", "lat"), 
+    crs = 4326, agr = "constant")
+world <- ne_countries(scale = "medium", returnclass = "sf")
+ggplot(data = world) +
+    geom_sf(fill = "darkolivegreen3") +
+    geom_sf(data = coordinatesMelee, size = 1, 
+        shape = 0, col = "red") +
+    coord_sf(xlim = c(-180, 180), ylim = c(-90, 90), expand = FALSE) +
+  xlab("Longitude") + ylab("Latitude") + ggtitle("Melee Tournament Locations: 2018 - 2020") +
+  theme(panel.background = element_rect(fill = "aliceblue"))
+```
+
+Confirming my suspicions, there are a majority of tournaments held in America.
+To my surprise, it looks like Europe is right behind America for tournament frequency. Let's look
+at the map for Ultimate and see if the trend is similar.
+
+```{r, echo = FALSE}
+ultimate <- read.csv("ultimate_tournament.csv")
+coordinatesUlt <- ultimate[,7:8]
+coordinatesUlt <- coordinatesUlt[which(!is.na(coordinatesUlt[,1])),]
+coordinatesUlt <- st_as_sf(coordinatesUlt, coords = c("lng", "lat"), 
+    crs = 4326, agr = "constant")
+ggplot(data = world) +
+    geom_sf(fill = "darkolivegreen3") +
+    geom_sf(data = coordinatesUlt, size = 1, 
+        shape = 0, col = "red") +
+    coord_sf(xlim = c(-180, 180), ylim = c(-90, 90), expand = FALSE) +
+  xlab("Longitude") + ylab("Latitude") + ggtitle("Ultimate Tournament Locations: 2018 - 2020") +
+  theme(panel.background = element_rect(fill = "aliceblue"))
+```
+
+The distribution for this map of Ultimate tournaments looks like the Melee one, except
+more populated. Notice how some places in the world have tournaments now, like certain parts of Africa,
+India, etc. 
+
+Melee is very equipment specific, in that you need old CRT TVs as well as a disc of the game (for legal purposes at big tournaments) 
+and a Nintendo Gamecube to play. If you look at pictures of Melee tournaments, there is a lot of equipment needed.
+Not only that, but the game is old, so getting a copy of Melee can be difficult.
+
+For Ultimate, all you need is the Nintendo Switch, a copy of the game (which can be digital or in a cartridge), and a monitor.
+The game is sold on the Nintendo eShop, and monitors are much more plentiful than CRT TVs. Also, wi-fi tournaments are more
+possible with Ultimate (you can set up online on Melee, but it requires third-party software). 
+
+
+These two factors help to explain a part of why there are more tournaments for Ultimate.
+
+***
+
+### Maybe we should look at some more maps...
+Just out of curiousity, let's compare certain regions where both games are played prevalently.
+Here's the distribution for America, the biggest region for tournaments.
+
+```{r, warning=FALSE, echo = FALSE}
+unitedStates <- ne_countries(country = "united states of america") %>% st_as_sf()
+states <- sf::st_as_sf(maps::map("state", plot = FALSE, fill = TRUE)) 
+states <- cbind(states, st_coordinates(st_centroid(states)))
+aUSA <- ggplot(data = world) +
+    geom_sf() +
+    geom_sf(data = unitedStates, fill = "darkolivegreen3") +
+    geom_sf(data = states, fill = NA) + 
+    geom_sf(data = coordinatesMelee, size = 1, 
+        shape = 0, col = "red") +
+    coord_sf(xlim = c(-130, -60), ylim = c(25, 50), expand = FALSE) +
+  xlab("Longitude") + ylab("Latitude") + ggtitle("Melee USA Tournament Locations: 2018 - 2020") + 
+  theme(panel.background = element_rect(fill = "aliceblue"))
+
+bUSA <- ggplot(data = world) +
+    geom_sf( ) +
+    geom_sf(data = unitedStates, fill = "darkolivegreen3") +
+    geom_sf(data = states, fill = NA) + 
+    geom_sf(data = coordinatesUlt, size = 1, 
+        shape = 0, col = "red") +
+    coord_sf(xlim = c(-130, -60), ylim = c(25, 50), expand = FALSE) +
+  xlab("Longitude") + ylab("Latitude") + ggtitle("Ultimate USA Tournament Locations: 2018 - 2020") +
+  theme(panel.background = element_rect(fill = "aliceblue"))
+
+grid.arrange(aUSA, bUSA, nrow = 2, ncol = 1)
+```
+
+Now here's the distribution for Europe, the second biggest region for tournaments.
+
+```{r, echo = FALSE}
+europe <- ne_countries(continent = "europe") %>% st_as_sf()
+
+a <- ggplot(data = world) +
+    geom_sf( ) +
+    geom_sf(data = europe, fill = "darkolivegreen3") +
+    geom_sf(data = coordinatesMelee, size = 1, 
+        shape = 0, col = "red") +
+    coord_sf(xlim = c(-15, 30), ylim = c(35, 72), expand = FALSE) +
+  xlab("Longitude") + ylab("Latitude") + ggtitle("Melee E.U.: 2018 - 2020") +
+  theme(panel.background = element_rect(fill = "aliceblue"))
+
+b <- ggplot(data = world) +
+    geom_sf( ) +
+    geom_sf(data = europe, fill = "darkolivegreen3") +
+    geom_sf(data = coordinatesUlt, size = 1, 
+        shape = 0, col = "red") +
+    coord_sf(xlim = c(-15, 30), ylim = c(35, 72), expand = FALSE) +
+  xlab("Longitude") + ylab("Latitude") + ggtitle("Ultimate E.U.: 2018 - 2020") +
+  theme(panel.background = element_rect(fill = "aliceblue"))
+
+grid.arrange(a, b, nrow = 1, ncol = 2)
+```
+
+Ultimate does seem to have a lot more tournaments than Melee in these regions.
+
+Speaking of these games, there is a ranking system for their competitive players. Players are rated based on their 
+performances at tournaments. Notably, Japanese players are prevalent in the top 100 for Ultimate, while
+their presence in Melee is very small. Also, the best player for Ultimate, MKLeo, comes from Mexico, which
+also has a strong scene for Smash Bros. Let's look at Mexico and Japan and their communities for the games.
+
+```{r, echo = FALSE}
+mexico <- ne_countries(country = "mexico") %>% st_as_sf()
+
+aMex <- ggplot(data = world) +
+    geom_sf( ) +
+    geom_sf(data = mexico, fill = "darkolivegreen3") +
+    geom_sf(data = coordinatesMelee, size = 1, 
+        shape = 0, col = "red") +
+    coord_sf(xlim = c(-120, -85), ylim = c(15, 35), expand = FALSE) +
+  xlab("Longitude") + ylab("Latitude") + ggtitle("Melee Mexico: 2018 - 2020") +
+  theme(panel.background = element_rect(fill = "aliceblue"))
+
+bMex <- ggplot(data = world) +
+    geom_sf( ) +
+    geom_sf(data = mexico, fill = "darkolivegreen3") +
+    geom_sf(data = coordinatesUlt, size = 1, 
+        shape = 0, col = "red") +
+    coord_sf(xlim = c(-120, -85), ylim = c(15, 35), expand = FALSE) +
+  xlab("Longitude") + ylab("Latitude") + ggtitle("Ultimate Mexico: 2018 - 2020") +
+  theme(panel.background = element_rect(fill = "aliceblue"))
+
+grid.arrange(aMex, bMex, nrow = 1, ncol = 2)
+```
+```{r, echo = FALSE}
+japan <- ne_countries(country = "japan") %>% st_as_sf()
+
+aJapan <- ggplot(data = world) +
+    geom_sf( ) +
+    geom_sf(data = japan, fill = "darkolivegreen3") +
+    geom_sf(data = coordinatesMelee, size = 1, 
+        shape = 0, col = "red") +
+    coord_sf(xlim = c(128, 147), ylim = c(28, 48), expand = FALSE) +
+  xlab("Longitude") + ylab("Latitude") + ggtitle("Melee Japan: 2018 - 2020") +
+  theme(panel.background = element_rect(fill = "aliceblue"))
+
+bJapan <- ggplot(data = world) +
+    geom_sf( ) +
+    geom_sf(data = japan, fill = "darkolivegreen3") +
+    geom_sf(data = coordinatesUlt, size = 1, 
+        shape = 0, col = "red") +
+    coord_sf(xlim = c(128, 147), ylim = c(28, 48), expand = FALSE) +
+  xlab("Longitude") + ylab("Latitude") + ggtitle("Ultimate Japan: 2018 - 2020") +
+  theme(panel.background = element_rect(fill = "aliceblue"))
+
+grid.arrange(aJapan, bJapan, nrow = 1, ncol = 2)
+```
+
+So how are the Japanese and Mexican players so highly rated on the top 100 despite their countries
+not having many tournaments? Simply put, they travel to the United States to compete in the big tournaments.
+With some tournaments having entrants in the thousands in the U.S., it's surprising that these players
+can afford to travel from somewhere like Japan to the U.S. so often. Especially since not being
+in the final top 8 of a tournament can leave you empty-handed, as prize money is usually dedicated to top 8.
+
+***
+
+Hopefully, you now know just how popular these two games are. Will Smash Bros. become
+even more popular in the future? Will it overtake games like Street Fighter and Tekken as the premier
+fighting game? I don't know for certain, but I'd say the community is flourishing more than ever.
+Hit up your local Smash scene and see for yourself. Maybe you too will even become addicted to playing this
+wacky fighting "party" game.
+
+Thanks for reading.
+

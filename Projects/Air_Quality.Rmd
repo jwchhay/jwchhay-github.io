@@ -1,0 +1,65 @@
+---
+title: "Untitled"
+author: "Jason Chhay"
+date: "5/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+
+beijing <- read_csv("C:/Users/Jason/Downloads/beijing-air-quality.csv")
+los_angeles <- read_csv("C:/Users/Jason/Downloads/los-angeles-north main street-air-quality.csv")
+wuhan <- read_csv("C:/Users/Jason/Downloads/wuhan-air-quality.csv")
+
+beijing$date <- as.Date(beijing$date, "%Y/%m/%d")
+los_angeles$date <- as.Date(los_angeles$date, "%Y/%m/%d")
+wuhan$date <- as.Date(wuhan$date, "%Y/%m/%d")
+
+beijing <- beijing %>% arrange(date)
+los_angeles <- los_angeles %>% arrange(date)
+wuhan <- wuhan %>% arrange(date)
+
+beijing <- beijing %>% mutate(year = factor(year(date)), month = months(date, abbreviate = TRUE))
+los_angeles <- los_angeles %>% mutate(year = factor(year(date)), month = months(date, abbreviate = TRUE))
+wuhan <- wuhan %>% mutate(year = factor(year(date)), month = months(date, abbreviate = TRUE))
+
+beijing2 <- beijing %>% group_by(month, year) %>% mutate(mean_pm25 = mean(pm25, na.rm = TRUE),
+                                                         mean_co = mean(co, na.rm = TRUE))
+los_angeles2 <- los_angeles %>% group_by(month, year) %>% mutate(mean_pm25 = mean(pm25, na.rm = TRUE),
+                                                                 mean_co = mean(co, na.rm = TRUE))
+wuhan2 <- wuhan %>% group_by(month, year) %>% mutate(mean_pm25 = mean(pm25, na.rm = TRUE),
+                                                     mean_co = mean(co, na.rm = TRUE))
+
+ggplot() + 
+  geom_line(data = beijing2, aes(x = factor(month, levels = unique(month)), y = mean_co, group = year, color = year), size = 1) +
+  labs(title = "Beijing mean carbon monoxide in atmosphere per month, per year", x = "Month", y = "Mean CO (parts per million)") +
+  ylim(0, 30) +
+  theme_dark()
+
+ggplot() + 
+  geom_line(data = los_angeles2, aes(x = factor(month, levels = unique(month)), y = mean_co, group = year, color = year), size = 1) +
+  labs(title = "Los Angeles mean carbon monoxide in atmosphere per month, per year", x = "Month", y = "Mean CO (parts per million)") +
+  ylim(0, 30) +
+  theme_dark()
+
+ggplot() + 
+  geom_line(data = wuhan2, aes(x = factor(month, levels = unique(month)), y = mean_co, group = year, color = year), size = 1) +
+  labs(title = "Wuhan mean carbon monoxide in atmosphere per month, per year", x = "Month", y = "Mean CO (parts per million)") +
+  ylim(0, 30) +
+  theme_dark()
+```
+

@@ -1,0 +1,137 @@
+---
+title: "Visualizing IMDB Ratings"
+author: "Jason Chhay"
+date: "5/1/2020"
+output: 
+  prettydoc::html_pretty:
+    theme: hpstr
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Reddit both annoys me and inspires me sometimes.
+
+Around a month ago, I was on Reddit wasting my time, as is usual of my daily routine.
+Because of the recent COVID-19 dilemma that forces me indoors, I browsed *waaaay* longer
+than I should have. 
+Eventually, I go to [/r/dataisbeatiful](https://www.reddit.com/r/dataisbeautiful/) and one of the posts
+there caught my attention. 
+[This post](https://www.reddit.com/r/dataisbeautiful/comments/fwjces/oc_the_absolute_quality_of_breaking_bad/)
+is quite nice in displaying the ratings of the episodes of a show, which in this case,
+is Breaking Bad. Along with the side legend and pictures, it was a nice post.
+
+<center>
+![](https://i.redd.it/0yr8cc4mydr41.png)
+</center>
+
+However, after this post was made, I saw a flood of posts that were similar to this except 
+with different shows. I got pretty irritated because it looked
+like an easy karma grab for Reddit users.
+
+Thus, we land here. I got inspired by these posts to work more with webscraping tools.
+I did want to brush up on some of those tools, and I also wanted a new project
+for visualization.
+Here I'm using DT, which does have the capacity to make really nice looking tables.
+ 
+I'll be using my two favorite shows: House MD and Monk.
+I made a function that takes the link for a show on IMDB, and returns a table
+of the ratings of each episode.
+(I might make it user-inputtable in the future, since all it needs
+is one string to run. Maybe like cin from C++, but in R? I would
+need to be more familiar with Shiny for this to work.)
+
+The function itself, with code:
+
+```{r}
+suppressMessages(library(rvest))     # scraping tool
+suppressMessages(library(tidyverse)) # pipe function for readability
+suppressWarnings(library(DT))        # making the final table look pretty
+suppressMessages(library(stringr))   # regex with website
+
+# our website of interest, 
+# it's the only parameter we need to create a table
+# (perhaps...)
+IMDB_episode_ratings_table <- function(website){
+  website <- website
+
+  # what we want to extract from the website
+  pattern <- "title/([a-z0-9]*[a-z0-9])/" 
+
+  # imdb title code as a string
+  imdb_title <- str_match(website, pattern)[1,2]  
+      
+
+  # get number of seasons from the website
+  seasons <- website %>% read_html() %>% 
+           html_nodes(".clear+ div a:nth-child(1)") %>% 
+           html_text() %>% as.numeric() 
+  # making it into a vector is easier
+  seasons <- 1:seasons                    
+
+  seasonList <- list()       # empty list
+
+  # for loop to extract ratings from website:
+  # 1. we go in a page for one season
+  # 2. acquire all ratings
+  # 3. place the rating in our empty list
+  # 4. repeat for all seasons
+  for(i in seq_along(seasons)){
+    # the html for each season differs by i
+    seasonhtml <- paste("https://www.imdb.com/title/", 
+                      imdb_title, 
+                      "/episodes?season=", i, 
+                      "&ref_=tt_eps_sn_", i, sep = "")
+  
+    # creates vector of ratings
+    ratings <- seasonhtml %>% read_html() %>% 
+    html_nodes(".ipl-rating-star.small .ipl-rating-star__rating") %>%
+    html_text() %>% as.numeric() %>% as.data.frame()
+  
+    # place vector into i-th list position
+     seasonList[i] <- ratings                                     
+  }
+
+  # part of a technique to create all vectors as equal length
+  maxLength <- max(sapply(seasonList,length))       
+
+  # expanding our list with the previous technique
+  for(i in seq_along(seasonList)){
+    length(seasonList[[i]]) <- maxLength            
+  }
+
+  # create a data frame from this list
+  x <- as.data.frame(seasonList)
+
+  # adding names to the data frame
+  seasonName <- paste("Season ", seasons)
+  episodeName <- paste("Ep. ", 1:nrow(x))
+  row.names(x) <- episodeName
+  colnames(x) <- seasonName
+
+  # displaying the table with some colors
+  datatable(x) %>% formatStyle(names(x), 
+    backgroundColor = styleInterval(c(5.5,6.5,7.5,8.5),
+      c("red","orange","yellow", "greenyellow","lawngreen"))
+  )
+}
+```
+
+There are colors that the function adds to the table. It basically works like this:
+episodes between 8.6 to 10 are green, 7.6-8.5 are light green, 6.6-7.5 are yellow,
+5.6-6.5 are orange, and anything below that is red.
+
+With that, here's House MD's ratings:
+
+```{r}
+IMDB_episode_ratings_table("https://www.imdb.com/title/tt0412142/")
+```
+
+And here's Monk's ratings:
+
+```{r}
+IMDB_episode_ratings_table("https://www.imdb.com/title/tt0312172/")
+```
+
+
