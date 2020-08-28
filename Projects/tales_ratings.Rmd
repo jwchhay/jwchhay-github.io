@@ -1,0 +1,70 @@
+---
+title: "Tales of Game Series: JP vs NA Ratings"
+author: "Jason Chhay"
+date: "8/27/2020"
+output: 
+  prettydoc::html_pretty:
+    theme: hpstr
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Note: most of my information comes from the Wikipedia article for the game series (https://en.wikipedia.org/wiki/Tales_(video_game_series).
+
+One of my favorite video game series is the "Tales of" series, published by Namco Bandai who has published other popular
+games like Soul Calibur, Pac-Man, and Dark Souls, among others. This series is a JRPG series and is highly regarded in Japan,
+ranking as the 3rd biggest RPG series in that country behind Final Fantasy and Dragon Quest.
+
+I've played my fair share of games in the series ever since I was in junior high. Out of the 18 released games in the series,
+I've beaten 6 of them. They're all lengthy games, especially if you try to discover and unlock everything that each game
+has to offer (in particular I've logged in roughly 150 hours in one of my favorites: Tales of Symphonia). The average game
+takes around 40 hours to beat, and I think I have around 300+ hours in the whole series. It's safe to say that I like the 
+series.
+
+***** 
+
+There's a famous video game magazine in Japan called Famitsu, and they publish scores that get released in that country. 
+As said in this article for Ghost of Tsushima (https://gearnuke.com/ghost-of-tsushima-gets-perfect-score-from-famitsu-third-western-game-to-reach-this-milestone/), "The review criteria at Famitsu is different compared to other publications where four editors offer their opinion on a game and each score them individually. The scores are then combined."
+
+For America,
+Gamerankings was a popular game review source, except they started on a website and they are a review aggregator. 
+Eventually, they
+merged into Metacritic in 2019, which is a similar site. Some people use these websites as a basis for reviews, but
+since they aggregate reviews, certain games can be heavily skewed just from people giving games 0's to perfect scores.
+
+I wanted to see how people within Japan and NA rated this game series, and compare them to my rankings of the 6 games
+I played. So, I hopped onto Excel and created this chart. 
+
+Some notes about what I made:
+
+- Shown are games that were both released in NA and in Japan, since some games are Japan-exclusive.
+- The x-axis contains the name of the game, the release date for both countries, and what system they're on.
+- Some reviews were missing for Metacritic and Gamerankings; decimal values are averages of both site's ratings while 
+whole numbers are just whatever value I could find.
+- Tales of Zestiria was released on both the PS3 and PS4; JP rating is based on PS3 while the NA rating is PS4 (since I 
+couldn't find a rating for PS3). Looking up the version differences, both versions of the game are essentially the same, 
+minus some graphical components like 1080p, etc.
+
+<center>
+![](C:/Users/Jason/Desktop/tales_chart.png)
+</center>
+
+*Please use this link to see the image in higher resolution (https://i.imgur.com/vXxXGgN.png)*
+
+Just at a glance, Famitsu rates their favorite Tales game as Tales of Xillia, while Metacritic/GameRankings rates
+their favorite as Tales of Symphonia. Huh, that's interesting.
+
+I thought Xillia was good but I didn't expect it to be so highly rated. That game also has the highest disparity out
+of the two ratings. 
+
+Meanwhile, Tales of Symphonia is the highest rated Tales game from an NA perspective, and it even beats out 
+Famitsu in percentage albeit barely. I have no idea why might be.
+
+Anyhow, I just wanted to quickly glance at what the ratings are, I don't have much analysis to do here besides 
+investigating why JP liked Tales of Xillia so much. Also, I also just wanted to test out the graphics
+you can get from Excel, since I've been working with it recently for a while and I'm trying to get more comfortable
+using more features. For quick visuals, it's very nifty.
+
+Cheers.
