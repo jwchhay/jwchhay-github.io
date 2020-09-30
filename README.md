@@ -6,9 +6,9 @@ Feel free to look at what I've created.
 
 The folders contain the following:
  - Pictures      -> holds images that act as thumbnails on my website (jwchhay.github.io)
- - Project_Code  -> holds R code that I use to create my little projects
+ - Project_Code  -> holds R code that I use to create my little projects (this is where all my coding is)
  - Projects      -> holds the individual HTML pages for my R code (uses RMarkdown)
-      N.B. *Looking at the contents of the Projects folder is not pleasant because it's all the code that was created by RStudio to create the project pages.*
+       (*Looking at the contents of the Projects folder is not pleasant because it's all the code that was created by RStudio to create the project pages.*)
 
 The files contain the following:
  - README.md     -> readme file.
