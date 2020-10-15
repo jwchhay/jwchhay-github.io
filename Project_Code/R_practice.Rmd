@@ -1,0 +1,178 @@
+---
+title: "Unscheduled R Practice - Part 1"
+author: "Jason Chhay"
+date: "10/11/2020"
+output:
+ prettydoc::html_pretty:
+    theme: leonids
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rvest)
+library(ggplot2)
+library(stringr)
+```
+
+## Documentation and Creating Random Projects
+
+This is just a simple thing I wanted to try: documenting my thought process when working on something.
+For this, I want to just look at some basketball stats.
+I am going to use <https://www.basketball-reference.com/leagues/NBA_stats_per_game.html> and try scraping some
+information and maybe plot some things. I'll show my code doing this process.
+
+***
+
+### Scraping and Cleaning
+
+```{r}
+# Essentially, I just look at a website which has a table and I
+# try to extract the information from there.
+# The package I use can easily extract HTML tables, but
+# this website doesn't have them I think.
+# This thought process can be applied to practically any website that has
+# data on it, but I'll just work with a table for now since it's easily
+# observable.
+
+# website to scrape
+website <- "https://www.basketball-reference.com/leagues/NBA_stats_per_game.html"
+
+# Find elements in page I want to extract, and turn it into something that we
+# can manipulate. I'm just trying to extract the data off the website and place it
+# into R.
+pattern <- "#stats a , .right , .center"
+league_avg <- website %>% read_html() %>%
+           html_nodes(pattern) %>% html_text()
+
+# league_avg is a character vector that's essentially a vector with a bunch of data
+# the goal is to convert it into a data frame, a data structure that makes a lot more sense
+
+league_average <- league_avg # copy of vector so i don't have to keep requesting info from the website
+
+# I just want to look at the seasons where the three-point line was used, aka starting at 1979-80
+match(42, league_average) # 1421 is when a new row starts, so keep everything before this
+league_average <- league_average[1:1420]
+head(league_average)
+```
+
+So since the original table has this "[1] ""         "Per Game" "Shooting" "Advanced"" overhead portion that I don't need, I'm going to remove it. It appears three times, so I am going to try removing any instance of these
+terms instead of manually finding them in the vector.
+
+```{r}
+remove_pattern <- league_average[1:4] # it's the first four terms of the vector
+
+# got the nest idea from the following link (I like using stackoverflow for these kind of scenarios):
+# https://stackoverflow.com/questions/5577727/is-there-an-r-function-for-finding-the-index-of-an-element-in-a-vector
+which(league_average %in% remove_pattern)
+
+```
+
+Based on this vector, we indeed see three groupings of consecutive numbers with the pattern in the original vector. After
+removing it, I should be able to properly format the table.
+
+```{r}
+league_average <- league_average[-which(league_average %in% remove_pattern)]
+# keep elements besides those found in the previous vector
+head(league_average)
+which(league_average %in% remove_pattern) # confirming we removed those words from the vector
+```
+
+***
+
+### More Cleaning
+
+Alright, we removed the words. Now, if we look at the first row in the table on the website, it should just be the column names.
+However, this also appears three times. I want to keep only the first one, so I'm going to remove the two latter ones. I realize
+now that I could've removed them at the same time as the overhead names, but it didn't occur to me.
+
+```{r}
+which(league_average %in% "ORtg") # so this tells us that there are 32 columns.
+league_average <- league_average[-c(((704-31):704),((1376-31):1376))] # really ugly looking way to say "remove the two latter rows"
+which(league_average %in% c("Rk","ORtg")) # confirm we removed the other instances of the rows
+```
+
+Okay, now the table is formatted the way I want. Time to convert it into a data frame. I needed to brush up a bit on some R fundamentals, so I checked online for a quick refresher from  <https://www.reddit.com/r/rprogramming/comments/b31neu/transform_a_vector_of_1184_entries_into_a_data/>
+
+```{r}
+league_df <- matrix(league_average, ncol = 32, byrow = TRUE)
+league_df <- as.data.frame(league_df, stringsAsFactors = FALSE)
+
+league_df[1:6,1:10] # previewing the data frame
+
+# some issues with colnames and rownames
+
+colnames(league_df) <- league_df[1,1:32]
+league_df <- league_df[-1,]
+rownames(league_df) <- league_df[1:41, 1]
+league_df[1:6,1:10]
+```
+
+Sadly the data.frame function converted all the columns as characters. I need to convert the classes because otherwise plotting
+some of the numbers gets out of control. Idea from <https://stackoverflow.com/questions/32173557/how-to-transform-a-vector-into-data-frame-with-fixed-dimension>
+
+```{r}
+str(league_df, list.len = 10) # just to show that things like "Age" is a character right now
+
+league_df[] <- lapply(league_df, type.convert)
+str(league_df, list.len = 10)
+
+# I'll remove factors from some columns as well.
+# (https://stackoverflow.com/questions/2851015/convert-data-frame-columns-from-factors-to-characters)
+league_df$Season <- sapply(league_df$Season, as.character)
+league_df$Lg <- sapply(league_df$Lg, as.character)
+league_df$Ht <- sapply(league_df$Ht, as.character)
+
+```
+
+Now it's fixed. I've now cleaned up data that I scraped from the website. I haven't played around with basketball-reference.com enough
+to see if I download the table in some form, but this is just one way I've been able to extract data manually.
+
+***
+
+### Even More Cleaning
+
+I just realized that some column names have special characters and numbers in it, which makes it really difficult to manipulate the columns. They mess up certain functions, so I need to change them first.
+Idea from <https://stackoverflow.com/questions/12995440/any-way-to-edit-values-in-a-matrix-in-r> and <https://stackoverflow.com/questions/3423085/numbers-as-column-names-of-data-frames>.
+
+```{r}
+x <- colnames(league_df)
+x # to show that there are percent symbols
+x <- gsub("%", "Percent", x)
+x <- gsub("3P", "ThreePoint", x)
+x <- gsub("/", "Over", x)
+x # now it's cleaned up
+colnames(league_df) <- x
+```
+
+***
+
+### Plotting
+
+Finally I can plot things easily now.
+For example, 3 pointers attempted throughout the years. This doesn't require any of the columns that need perecentages,
+but I think it's good practice to not have special characters in column names.
+
+Here's an example I wanted to show off: average number of threes attempted per game throughout the history of the three point line.
+
+```{r}
+# https://stackoverflow.com/questions/1330989/rotating-and-spacing-axis-labels-in-ggplot2
+ggplot(data = league_df, aes(x = Season, y = ThreePointA)) +
+  geom_bar(stat = "identity", fill = "red") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  xlab("NBA Season Year") +
+  ylab("Average three pointers attempted per game")
+```
+
+Upon looking at this, you can see a trend in more threes being shot. They are just more efficient than taking a regular 2 point shot, since you literally earn another extra point just from shooting further away.
+Why the little spike from 1994 to 1997? The NBA shortened the three point line during those years (<https://www.cbssports.com/nba/news/what-the-shortened-nba-3-point-line-of-the-mid-1990s-says-about-the-future-of-long-range-shooting/>), so teams
+attempted more to capitalize on the shortened distance. There's your trivia for the day.
+
+***
+
+### Conclusive Thoughts
+
+This was just an example of how I might analyzing something on a website. It probably isn't the best way to do it, as I'd
+have to research what the proper method would be, but it works. Also, it's pretty funny how most of my work was just to clean
+data.
+
+Cheers.
