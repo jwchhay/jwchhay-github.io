@@ -1,5 +1,5 @@
 ---
-title: "a"
+title: "UNFINISHED BART DATA"
 author: "Jason Chhay"
 date: "3/21/2020"
 output: html_document
@@ -22,9 +22,8 @@ names(destination) <- c("Origin_Station", "n")
 newBart <- rbind(origin, destination)
 newBart$ID <- c(rep("Origin", 44), rep("Destination", 44))
 names(newBart) <- c("Station", "Count", "Location")
-ggplot(data = newBart, aes(x = Station, y = Count, fill = Location, color = Location, alpha = Location)) + geom_bar(stat = "identity", position = "identity") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) + 
+ggplot(data = newBart, aes(x = Station, y = Count, fill = Location, color = Location, alpha = Location)) + geom_bar(stat = "identity", position = "identity") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   scale_y_continuous(labels = scales::comma) + scale_colour_manual(values=c("lightblue4","red")) +
   scale_fill_manual(values=c("lightblue","pink")) +
   scale_alpha_manual(values=c(.3, .8))
 ```
-

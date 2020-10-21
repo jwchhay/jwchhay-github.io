@@ -1,65 +1,62 @@
 ---
-title: "Untitled"
+title: "Air Quality in Modesto, from 2014 'til Now"
 author: "Jason Chhay"
-date: "5/7/2020"
-output: html_document
+date: "9/30/2020"
+output:
+  prettydoc::html_pretty:
+    theme: architect
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## TL;DR Fire makes air bad.
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+For this past summer, I've been running outside frequently enough that I got used to the painfully hot summers of the Central Valley. Unfortunately, the California wildfires have gone rampant and nearly made it suicide to even be outside. Thus, I stayed inside.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+Since the air was practically poison at this point, I sat down in my house and thought about the wildfires in general. I haven't been home in a while, but I'm pretty sure fires haven't really been an issue here very much.
+
+So, I decided to look at aqicn.org to view some historical air quality data. Particulates smaller than 2.5 micrometers (PM2.5) come from fires and emissions (https://www.cdc.gov/air/particulate_matter.html), and they're bad to inhale. I thought it would be interesting to visualize how the air has been from fires. My initial assumption is that any big peaks in PM2.5 would be from nearby wildfires.
+
+I found data for Modesto's air quality, which ranges from the first day of 2014 up until today, which for me is 9/30/2020. I then plotted the max PM2.5 per month, just to immediately see any big fires that happened nearby.
 
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
 library(tidyverse)
 library(ggplot2)
 library(lubridate)
 
-beijing <- read_csv("C:/Users/Jason/Downloads/beijing-air-quality.csv")
-los_angeles <- read_csv("C:/Users/Jason/Downloads/los-angeles-north main street-air-quality.csv")
-wuhan <- read_csv("C:/Users/Jason/Downloads/wuhan-air-quality.csv")
+# CSV file acquired from aqicn.org
+modesto <- read_csv("C:/Users/Jason/Downloads/modesto_aqi.csv")
 
-beijing$date <- as.Date(beijing$date, "%Y/%m/%d")
-los_angeles$date <- as.Date(los_angeles$date, "%Y/%m/%d")
-wuhan$date <- as.Date(wuhan$date, "%Y/%m/%d")
+# Tidying up the data
+modesto$date <- as.Date(modesto$date, "%Y/%m/%d")
 
-beijing <- beijing %>% arrange(date)
-los_angeles <- los_angeles %>% arrange(date)
-wuhan <- wuhan %>% arrange(date)
+modesto <- modesto %>% arrange(date)
 
-beijing <- beijing %>% mutate(year = factor(year(date)), month = months(date, abbreviate = TRUE))
-los_angeles <- los_angeles %>% mutate(year = factor(year(date)), month = months(date, abbreviate = TRUE))
-wuhan <- wuhan %>% mutate(year = factor(year(date)), month = months(date, abbreviate = TRUE))
+modesto <- modesto %>% mutate(year = factor(year(date)), month = months(date, abbreviate = TRUE))
 
-beijing2 <- beijing %>% group_by(month, year) %>% mutate(mean_pm25 = mean(pm25, na.rm = TRUE),
+modesto <- modesto %>% group_by(month, year) %>% mutate(max_pm25 = max(pm25, na.rm = TRUE),
+                                                         mean_pm25 = mean(pm25, na.rm = TRUE),
+                                                         median_pm25 = median(pm25, na.rm = TRUE),
                                                          mean_co = mean(co, na.rm = TRUE))
-los_angeles2 <- los_angeles %>% group_by(month, year) %>% mutate(mean_pm25 = mean(pm25, na.rm = TRUE),
-                                                                 mean_co = mean(co, na.rm = TRUE))
-wuhan2 <- wuhan %>% group_by(month, year) %>% mutate(mean_pm25 = mean(pm25, na.rm = TRUE),
-                                                     mean_co = mean(co, na.rm = TRUE))
-
-ggplot() + 
-  geom_line(data = beijing2, aes(x = factor(month, levels = unique(month)), y = mean_co, group = year, color = year), size = 1) +
-  labs(title = "Beijing mean carbon monoxide in atmosphere per month, per year", x = "Month", y = "Mean CO (parts per million)") +
-  ylim(0, 30) +
-  theme_dark()
-
-ggplot() + 
-  geom_line(data = los_angeles2, aes(x = factor(month, levels = unique(month)), y = mean_co, group = year, color = year), size = 1) +
-  labs(title = "Los Angeles mean carbon monoxide in atmosphere per month, per year", x = "Month", y = "Mean CO (parts per million)") +
-  ylim(0, 30) +
-  theme_dark()
-
-ggplot() + 
-  geom_line(data = wuhan2, aes(x = factor(month, levels = unique(month)), y = mean_co, group = year, color = year), size = 1) +
-  labs(title = "Wuhan mean carbon monoxide in atmosphere per month, per year", x = "Month", y = "Mean CO (parts per million)") +
-  ylim(0, 30) +
-  theme_dark()
+ggplot() +
+  geom_line(data = modesto, aes(x = date, y = max_pm25), color = "red", size = 1) +
+  labs(title = "Modesto max PM2.5 per month, per year (1/1/14 - 9/30/20)", x = "Year", y = "PM2.5") + theme_bw() + scale_x_date(date_breaks = "1 year", date_labels = "%Y")
 ```
 
+I kinda forgot there was a big fire in late 2018 (https://en.wikipedia.org/wiki/2018_California_wildfires). I was in Los Angeles at that time, so maybe that's why I didn't remember.
+
+Now looking at the PM2.5 per day:
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+ggplot() +
+  geom_line(data = modesto, aes(x = date, y = pm25), color = "red") +
+  labs(title = "Modesto PM2.5 per day (1/1/14 - 9/30/20)", x = "Year", y = "PM2.5") + theme_bw() + scale_x_date(date_breaks = "1 year", date_labels = "%Y")
+```
+
+Just from observation, we can see the air looking pretty bad recently, as evident of the spike. This graph also makes me
+wonder if air quality is generally better in summer than in the winter time (notice the waviness). The only thing I can guess that affects wildfires and their occurrence is how much rain falls throughout the year. Dry seasons can easily cause fires to ignite and spread rampantly.
+
+I'm not too familiar with time series analysis yet, so I'll just leave it as this for now. Just an interesting observation, this is.
